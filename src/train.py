@@ -1,9 +1,10 @@
 import torch
+import os
 
 from dataset import BirdCLEF2023_Dataset
 from model import Mel_Classifier
 
-def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epochs=1, device = 'cpu'):
+def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epochs=1, device = 'cpu', print_every_n_batches = 50,outpath = ''):
 
     best_state_dictionary = None
     best_validation_accuracy = 0.0
@@ -13,9 +14,8 @@ def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epoc
         running_loss = 0.0
         net = net.train()
         for i, data in enumerate(trainloader, 0):
-            print('Batch: ' + str(i))
             # get the inputs
-            inputs, labels = data
+            inputs, labels = data['mel_spec'], data['primary_label_tensor']
             if device == 'cuda':
                 inputs, labels = inputs.cuda(), labels.cuda()
             # zero the parameter gradients
@@ -32,9 +32,9 @@ def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epoc
 
             # print statistics and write to log
             running_loss += loss.item()
-            if i % 20 == 19:    # print every 2000 mini-batches
-                print('[%d, %5d] Training loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 20))
+            if i % print_every_n_batches == print_every_n_batches - 1:
+                print('[%d, %5d / %d] Training loss: %.3f' %
+                      (epoch + 1, i + 1, len(trainloader.dataset), running_loss / print_every_n_batches))
                 running_loss = 0.0
         if type(scheduler).__name__ != 'NoneType':
             scheduler.step()
@@ -44,7 +44,7 @@ def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epoc
         net = net.eval()
         for i, data in enumerate(valloader, 0):
             # get the inputs
-            inputs, labels = data
+            inputs, labels = data['mel_spec'], data['primary_label_tensor']
             if device == 'cuda':
                 inputs, labels = inputs.cuda(), labels.cuda()
 
@@ -57,13 +57,13 @@ def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epoc
 
             # print statistics and write to log
             running_loss += loss.item()
-            if i % 20 == 19:  # print every 2000 mini-batches
-                print('[%d, %5d] Validation loss: %.3f' %
-                             (epoch + 1, i + 1, running_loss / 20))
+            if i % print_every_n_batches == print_every_n_batches - 1: 
+                print('[%d, %5d / %d] Validation loss: %.3f' %
+                             (epoch + 1, i + 1, len(valloader.dataset), running_loss / print_every_n_batches))
                 running_loss = 0.0
-            correct += (outputs.argmax(1) == labels).sum().item()
+            correct += (outputs.argmax(1) == labels.argmax(1)).sum().item()
 
-        val_accuracy = 100 * correct / len(valloader)
+        val_accuracy = 100 * correct / len(valloader.dataset)
 
         if val_accuracy > best_validation_accuracy:
             best_state_dictionary = net.state_dict()
@@ -77,7 +77,7 @@ def train_net(net, trainloader, valloader, criterion, optimizer, scheduler, epoc
         print(f"Validation accuracy: {val_accuracy}")
 
     # save network
-    torch.save(best_state_dictionary, 'project2_modified.pth')
+    torch.save(best_state_dictionary, os.path.join(outpath,'project2_modified.pth'))
     # write finish to the file
     print('Finished Training')
 
@@ -88,8 +88,8 @@ if __name__ == '__main__':
 
     train_dataset, val_dataset = torch.utils.data.random_split(dataset_, (0.8, 0.2))
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = 1, shuffle = True, num_workers = 2)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 1, shuffle = True, num_workers = 2)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = 2, shuffle = True, num_workers = 2)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = 2, shuffle = True, num_workers = 2)
 
     network = Mel_Classifier()
     for param in network.dinov2_vits14.parameters():
@@ -107,3 +107,6 @@ if __name__ == '__main__':
               ,epochs=1
               ,device = 'cpu')
 
+
+# TODO data augmentation: random pitch
+# TODO soft labels --> include secondary labels
