@@ -47,11 +47,13 @@ def main_train():
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = CONFIG.batch_size, shuffle = True, num_workers = CONFIG.num_workers)
 
     network = Mel_Classifier()
-    for param in network.dinov2_vits14.parameters():
-        param.requires_grad = False
+
+    if CONFIG.fix_features == True:
+        for param in network.features.parameters():
+            param.requires_grad = False
 
     criterion = CONFIG.criterion()
-    optimizer = CONFIG.optimizer(filter(lambda p: p.requires_grad, network.parameters()), lr=0.0004, momentum=0.9)
+    optimizer = CONFIG.optimizer(filter(lambda p: p.requires_grad, network.parameters()), lr=CONFIG.lr, momentum=CONFIG.momentum)
     scheduler = CONFIG.scheduler
 
     train_net(net=network,

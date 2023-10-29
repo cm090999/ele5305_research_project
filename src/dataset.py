@@ -162,4 +162,7 @@ if __name__=="__main__":
     plt.xlabel("Time")
     plt.ylabel("Mel Frequency")
     plt.show()
+
+
+# TODO: outsource operations to gpu?
     

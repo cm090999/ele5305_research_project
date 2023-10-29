@@ -32,6 +32,7 @@ class Config():
         self.epochs = 1
         self.print_every_n_batches = 50
         self.patience = 3
+        self.fix_features = False
 
         # Image Transforms
         self.train_transforms = torchvision.transforms.Compose([
