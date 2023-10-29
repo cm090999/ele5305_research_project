@@ -49,7 +49,9 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
                  period = 5, 
                  secondary_coef: float = 1.0, 
                  smooth_label: float = 0.05,
-                 mel_spec_transform: torchvision.transforms = None):
+                 mel_spec_transform: torchvision.transforms = None,
+                 n_mfcc = 40,
+                 **kwargs):
          
         # Save path of dataset
         self.datapath = data_path
@@ -62,6 +64,7 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
         self.period = period
         self.secondary_coef = secondary_coef
         self.smooth_label = smooth_label
+        self.n_mfcc = n_mfcc
 
         # Initialize Mel Spectrogram Object
         self.mel_transform = torchaudio.transforms.MelSpectrogram(
@@ -72,6 +75,15 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
             hop_length=hop_length,      
             n_mels=n_mels,           
         )
+
+        mel_kwargs = {'n_fft': n_fft,
+                      'f_min': f_min,
+                      'f_max': f_max,
+                      'hop_length': hop_length,
+                      'n_mels': n_mels  }
+        self.mfcc_extractor = torchaudio.transforms.MFCC(sample_rate=self.sample_rate,
+                                                         n_mfcc=self.n_mfcc,
+                                                        melkwargs=mel_kwargs)
 
         # Initialize Transform object
         self.wave_transform = wave_transform
@@ -92,13 +104,11 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
 
         # Get labels as torch tensors
         primary_label = torch.tensor([1 if dict_idx['primary_label'] == label else 0 for label in self.species],dtype=float)
-        secondary_label = torch.tensor([1 if dict_idx['secondary_labels'] == label else 0 for label in self.species],dtype=float)
+        secondary_label = torch.tensor([1 if label in dict_idx['secondary_labels'] else 0 for label in self.species], dtype=float)
+        combined_label = self._prepare_target(main_tgt=primary_label, sec_tgt=secondary_label)
+        dict_idx['combined_label_tensor'] = combined_label
         dict_idx['primary_label_tensor'] = primary_label
         dict_idx['secondary_label_tensor'] = secondary_label
-
-        # # Get path of wave file and load
-        # ogg_file = os.path.join(self.datapath, os.path.join('train_audio',dict_idx['filename']))
-        # waveform, sample_rate = torchaudio.load(ogg_file)
 
         # Load and Crop
         ogg_file = os.path.join(self.datapath, os.path.join('train_audio',dict_idx['filename']))
@@ -119,8 +129,18 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
             mel_spectrogram = self.mel_spec_transform(mel_spectrogram)
         dict_idx['mel_spec'] = mel_spectrogram
 
+        # Get MFCCs
+        mfcc = self.mfcc_extractor(waveform_seg)
+        dict_idx['mfcc'] = mfcc
+
         # return dict_idx
         return dict_idx
+    
+    # https://github.com/VSydorskyy/BirdCLEF_2023_1st_place/blob/main/code_base/datasets/wave_dataset.py, changed
+    def _prepare_target(self, main_tgt, sec_tgt, all_labels=None):
+        all_tgt = main_tgt + sec_tgt
+        all_tgt = torch.clamp(all_tgt, 0.0, 1.0)
+        return all_tgt
 
 if __name__=="__main__":
 
@@ -132,8 +152,9 @@ if __name__=="__main__":
     dataset = BirdCLEF2023_Dataset(data_path = 'birdclef-2023'
                                    ,sample_rate = 32000,
                                    mel_spec_transform=transforms)
-    data_dict = dataset[0]
+    data_dict = dataset[5]
     mel_spec = data_dict['mel_spec']
+    mfcc = data_dict['mfcc']
     plt.figure(figsize=(10, 4))
     plt.imshow(mel_spec[0].numpy(), cmap="viridis", aspect="auto", origin="lower")
     plt.title("Mel Spectrogram")
