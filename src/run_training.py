@@ -1,14 +1,32 @@
 import torch
+import os
+import time
 
-from config import CONFIG
+from config import Config
 from dataset import BirdCLEF2023_Dataset
 from model import Mel_Classifier
-from train import train_net
+from train import train_net, create_logger
 
-if __name__ == '__main__':
-
+def main_train():
     # Load Config
-    CONFIG = CONFIG()
+    CONFIG = Config()
+
+    # Change Output path
+    folder_name = time.strftime('%Y-%m-%d_%H-%M-%S')
+    outpath = os.path.join(CONFIG.outpath, folder_name)
+    CONFIG.outpath = outpath
+    # Create Output directory
+    os.makedirs(CONFIG.outpath, exist_ok=True)
+
+    # Create Logger
+    logger = create_logger(final_output_path=CONFIG.outpath)
+
+    # Get all variable to logger
+    logger.info('############################################ START CONFIG FILE ############################################')
+    for attr, value in vars(CONFIG).items():
+        logger.info(f"{attr}: {value}")
+    logger.info('############################################  END CONFIG FILE  ############################################')
+
 
     # Get Dataset
     dataset = BirdCLEF2023_Dataset(data_path=CONFIG.birdclef2023,
@@ -41,9 +59,15 @@ if __name__ == '__main__':
               valloader=val_loader,
               criterion=criterion,
               optimizer=optimizer,
+              logging=logger,
               scheduler=scheduler,
               epochs=CONFIG.epochs,
               device=CONFIG.device,
-              print_every_n_batches=CONFIG.print_every_n_batches,
-              outpath=CONFIG.outpath,
+              print_every_samples=CONFIG.print_every_n_batches,
+              savePth=CONFIG.outpath,
+              patience=CONFIG.patience
               )
+
+
+if __name__ == '__main__':
+    main_train()

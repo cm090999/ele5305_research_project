@@ -2,7 +2,7 @@ import torchvision
 import torch
 
 
-class CONFIG():
+class Config():
     def __init__(self) -> None:
 
         # Device
@@ -12,7 +12,7 @@ class CONFIG():
         self.birdclef2023 = 'birdclef-2023'
 
         # Out path
-        self.outpath = ''
+        self.outpath = 'results'
 
         # Train/Validation Split 
         self.val_frac = 0.1
@@ -31,6 +31,7 @@ class CONFIG():
         # Training Settings
         self.epochs = 1
         self.print_every_n_batches = 50
+        self.patience = 3
 
         # Image Transforms
         self.train_transforms = torchvision.transforms.Compose([
@@ -66,4 +67,9 @@ class CONFIG():
         self.f_max=15000
         self.hop_length=512
         self.n_mels=128
+        self.mel_args = {'n_fft': self.n_fft,
+                         'f_min': self.f_min,
+                         'f_max': self.f_max,
+                         'hop_length': self.hop_length,
+                         'n_mels': self.n_mels}
     
