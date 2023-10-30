@@ -1,6 +1,32 @@
 import torchvision
 import torch
 
+class Config_Mel():
+    def __init__(self) -> None:
+        
+        # Device
+        self.device = 'cpu'
+        
+        # Dataset Path
+        self.birdclef2023 = 'birdclef-2023'
+
+        # Out path
+        self.outpath_images = self.birdclef2023 + '_MelSpectrograms'
+
+        # Audio Features
+        self.sample_rate = 32000
+        self.n_fft=2048
+        self.f_min=40
+        self.f_max=15000
+        self.hop_length=512
+        self.n_mels=128
+        self.mel_args = {'sample_rate': self.sample_rate,
+                         'n_fft': self.n_fft,
+                         'f_min': self.f_min,
+                         'f_max': self.f_max,
+                         'hop_length': self.hop_length,
+                         'n_mels': self.n_mels}
+
 
 class Config():
     def __init__(self) -> None:
