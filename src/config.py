@@ -1,5 +1,6 @@
 import torchvision
 import torch
+import torchaudio
 
 class Config_Mel():
     def __init__(self) -> None:
@@ -12,6 +13,8 @@ class Config_Mel():
 
         # Out path
         self.outpath_images = self.birdclef2023 + '_MelSpectrograms'
+
+        self.melSpecTransform = torchaudio.transforms.AmplitudeToDB()
 
         # Audio Features
         self.sample_rate = 32000

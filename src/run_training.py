@@ -4,7 +4,7 @@ import time
 
 from config import Config
 from dataset import BirdCLEF2023_Dataset
-from model import Mel_Classifier
+from model import Mel_Classifier, Pre_trained_Classifier
 from train import train_net, create_logger
 
 def main_train():
@@ -46,10 +46,10 @@ def main_train():
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = CONFIG.batch_size, shuffle = True, num_workers = CONFIG.num_workers)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size = CONFIG.batch_size, shuffle = True, num_workers = CONFIG.num_workers)
 
-    network = Mel_Classifier()
+    network = Pre_trained_Classifier(model_name='tf_efficientnet_b0_ns')
 
     if CONFIG.fix_features == True:
-        for param in network.features.parameters():
+        for param in network.backbone.parameters():
             param.requires_grad = False
 
     criterion = CONFIG.criterion()

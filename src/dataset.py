@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import torch
 import torchaudio
@@ -37,21 +38,22 @@ def load_wave_and_crop(filename, period, start=None):
     return waveform_orig, waveform_seg, sample_rate, start
 
 class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
-    def __init__(self, 
-                 data_path: str, 
-                 sample_rate: float = 32000, 
-                 n_fft=2048, 
-                 f_min = 40, 
-                 f_max = 15000,
-                 hop_length=512, 
-                 n_mels=128, 
-                 wave_transform = None, 
-                 period = 5, 
-                 secondary_coef: float = 1.0, 
-                 smooth_label: float = 0.05,
-                 mel_spec_transform: torchvision.transforms = None,
-                 n_mfcc = 40,
-                 **kwargs):
+    def __init__(self, data_path: str, **kwargs):
+
+        # Default values
+        sample_rate = kwargs.get('sample_rate', 32000)
+        n_fft = kwargs.get('n_fft', 2048)
+        f_min = kwargs.get('f_min', 40)
+        f_max = kwargs.get('f_max', 15000)
+        hop_length = kwargs.get('hop_length', 512)
+        n_mels = kwargs.get('n_mels', 128)
+        wave_transform = kwargs.get('wave_transform', None)
+        period = kwargs.get('period', 5)
+        secondary_coef = kwargs.get('secondary_coef', 1.0)
+        smooth_label = kwargs.get('smooth_label', 0.05)
+        mel_spec_transform = kwargs.get('mel_spec_transform', None)
+        n_mfcc = kwargs.get('n_mfcc', 40)
+        device = kwargs.get('device', 'cpu')
          
         # Save path of dataset
         self.datapath = data_path
@@ -60,6 +62,7 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
         self.df = pd.read_csv(os.path.join(data_path, 'train_metadata.csv'))
 
         # Save hyperparameters
+        self.device = device
         self.sample_rate = sample_rate
         self.period = period
         self.secondary_coef = secondary_coef
@@ -67,23 +70,25 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
         self.n_mfcc = n_mfcc
 
         # Initialize Mel Spectrogram Object
+        mel_kwargs = {  'n_fft': n_fft,
+                        'f_min': f_min,
+                        'f_max': f_max,
+                        'hop_length': hop_length,
+                        'n_mels': n_mels 
+                     }
         self.mel_transform = torchaudio.transforms.MelSpectrogram(
-            sample_rate=self.sample_rate,  
-            n_fft=n_fft,
-            f_min=f_min,
-            f_max=f_max,
-            hop_length=hop_length,      
-            n_mels=n_mels,           
+            sample_rate = sample_rate,
+            **mel_kwargs          
         )
 
-        mel_kwargs = {'n_fft': n_fft,
-                      'f_min': f_min,
-                      'f_max': f_max,
-                      'hop_length': hop_length,
-                      'n_mels': n_mels  }
-        self.mfcc_extractor = torchaudio.transforms.MFCC(sample_rate=self.sample_rate,
-                                                         n_mfcc=self.n_mfcc,
+        # Initialize MFCC extractor
+        self.mfcc_extractor = torchaudio.transforms.MFCC(n_mfcc=self.n_mfcc,
+                                                         sample_rate=sample_rate,
                                                         melkwargs=mel_kwargs)
+        
+        # # Send to device
+        # self.mel_transform.to(device)
+        # self.mfcc_extractor.to(device)
 
         # Initialize Transform object
         self.wave_transform = wave_transform
@@ -152,8 +157,15 @@ if __name__=="__main__":
     dataset = BirdCLEF2023_Dataset(data_path = 'birdclef-2023'
                                    ,sample_rate = 32000,
                                    mel_spec_transform=transforms)
+    
     data_dict = dataset[5]
     mel_spec = data_dict['mel_spec']
+
+    # mel_builder = MelSpectrogram_Builder(device='cpu', sample_rate=32000, n_fft=2048, hop_length=512, n_mels=128)
+
+    # Call the instance with a waveform to compute the Mel spectrogram
+    # mel_spectrogram = mel_builder(data_dict['waveform_seg'])
+
     mfcc = data_dict['mfcc']
     plt.figure(figsize=(10, 4))
     plt.imshow(mel_spec[0].numpy(), cmap="viridis", aspect="auto", origin="lower")

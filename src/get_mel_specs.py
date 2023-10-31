@@ -163,7 +163,7 @@ if __name__=='__main__':
     mel_builder = MelSpectrogram_Builder(device=CONFIG.device, **CONFIG.mel_args)
     image_builder = BirdClef_ToMel(datapath=CONFIG.birdclef2023,
                                    melspecBuilder=mel_builder,
-                                   melSpecTransform=None,
+                                   melSpecTransform=CONFIG.melSpecTransform,
                                    outpath=CONFIG.outpath_images)
     image_builder.createDataset()
     pass
