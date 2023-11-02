@@ -85,10 +85,6 @@ class BirdCLEF2023_Dataset(torch.utils.data.Dataset):
         self.mfcc_extractor = torchaudio.transforms.MFCC(n_mfcc=self.n_mfcc,
                                                          sample_rate=sample_rate,
                                                         melkwargs=mel_kwargs)
-        
-        # # Send to device
-        # self.mel_transform.to(device)
-        # self.mfcc_extractor.to(device)
 
         # Initialize Transform object
         self.wave_transform = wave_transform
@@ -161,7 +157,6 @@ if __name__=="__main__":
     data_dict = dataset[5]
     mel_spec = data_dict['mel_spec']
 
-    # mel_builder = MelSpectrogram_Builder(device='cpu', sample_rate=32000, n_fft=2048, hop_length=512, n_mels=128)
 
     # Call the instance with a waveform to compute the Mel spectrogram
     # mel_spectrogram = mel_builder(data_dict['waveform_seg'])

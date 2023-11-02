@@ -1,5 +1,5 @@
 ´´´
-pip3 install torch torchvision torchaudio pandas numpy matplotlib ipykernel pillow
+pip3 install torch torchvision torchaudio pandas numpy matplotlib ipykernel pillow torchtoolbox
 ´´´
 
 in src:
