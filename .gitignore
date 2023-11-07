@@ -3,6 +3,10 @@ birdclef-2023
 birdclef-2021
 *.zip
 __pycache__
+*/__pycache__
 results
 .vscode
 birdclef-2023_MelSpectrograms
+birdclef-2023_MelSpectrograms_5_seconds
+toDelete
+*.pth
