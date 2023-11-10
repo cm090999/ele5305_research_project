@@ -10,3 +10,5 @@ birdclef-2023_MelSpectrograms
 birdclef-2023_MelSpectrograms_5_seconds
 toDelete
 *.pth
+birdclef2021_background_noise
+swiss_birds
