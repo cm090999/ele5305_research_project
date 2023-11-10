@@ -2,8 +2,13 @@
 # Background
 This repository is the code base for a project completed for the course ELEC5305 "Acoustics, Speech and Signal Processing" at the University of Sydney.
 
+# Overview
+
+All source files are in the src_swiss_birds folder. The file download_data.ipynb is the notebook that was used to create the dataset. The file train_notebook_grid_training.ipynb can be run to perform the grid search. The grid parameters can be modified to a single value, such that the script can be used to train and test a single model.
+
 
 # Setup
+The following steps are needed to run the code.
 
 ## Python
 After setting up your python environment, install the following packages:
